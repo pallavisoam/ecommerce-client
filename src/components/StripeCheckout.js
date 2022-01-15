@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { createPaymentIntent } from "../functions/stripe";
 import { Link } from "react-router-dom";
 import { Card } from "antd";
-import { DollarOutlined, CheckOutlined } from "@ant-design/icons";
+import { DollarOutlined, CheckOutlined, SwapOutlined } from "@ant-design/icons";
 import Laptop from "../images/laptop5.jpg";
 import { createOrder, emptyUserCart } from "../functions/user";
 
@@ -17,6 +17,7 @@ const StripeCheckout = ({ history }) => {
   const [processing, setProcessing] = useState("");
   const [disabled, setDisabled] = useState(true);
   const [clientSecret, setClientSecret] = useState("");
+
   const [cartTotal, setCartTotal] = useState(0);
   const [totalAfterDiscount, setTotalAfterDiscount] = useState(0);
   const [payable, setPayable] = useState(0);
@@ -28,7 +29,7 @@ const StripeCheckout = ({ history }) => {
     createPaymentIntent(user.token, coupon).then((res) => {
       console.log("create payment intent", res.data);
       setClientSecret(res.data.clientSecret);
-      // additional res received on successful payment
+      // additional response received on successful payment
       setCartTotal(res.data.cartTotal);
       setTotalAfterDiscount(res.data.totalAfterDiscount);
       setPayable(res.data.payable);
@@ -56,9 +57,9 @@ const StripeCheckout = ({ history }) => {
       // create order and save in database for admin to process
       createOrder(payload, user.token).then((res) => {
         if (res.data.ok) {
-          // empty cart from local storrage
+          // empty cart from local storage
           if (typeof window !== "undefined") localStorage.removeItem("cart");
-          // empty from redux
+          // empty cart from redux
           dispatch({
             type: "ADD_TO_CART",
             payload: [],
@@ -68,11 +69,11 @@ const StripeCheckout = ({ history }) => {
             type: "COUPON_APPLIED",
             payload: false,
           });
+          // empty cart from database
+          emptyUserCart(user.token);
         }
       });
-      // empty cart from database
-      emptyUserCart(user.token);
-
+      // empty user cart from redux store and local storage
       console.log(JSON.stringify(payload, null, 4));
       setError(null);
       setProcessing(false);
@@ -110,9 +111,9 @@ const StripeCheckout = ({ history }) => {
       {!succeeded && (
         <div>
           {coupon && totalAfterDiscount !== undefined ? (
-            <p className="alert alert-success">{`Total after Discount $${totalAfterDiscount}`}</p>
+            <p className="alert alert-success">{`Total after discount: $${totalAfterDiscount}`}</p>
           ) : (
-            <p className="alert alert-danger">No Coupon Applied</p>
+            <p className="alert alert-danger">No coupon applied</p>
           )}
         </div>
       )}
@@ -130,10 +131,11 @@ const StripeCheckout = ({ history }) => {
           }
           actions={[
             <>
-              <DollarOutlined className="text-info" /> Total: ${cartTotal}
+              <DollarOutlined className="text-info" /> <br /> Total: $
+              {cartTotal}
             </>,
             <>
-              <CheckOutlined className="text-info" /> Total payable: $
+              <CheckOutlined className="text-info" /> <br /> Total payable : $
               {(payable / 100).toFixed(2)}
             </>,
           ]}
